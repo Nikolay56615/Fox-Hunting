@@ -1,6 +1,7 @@
 import pygame
 from operator import itemgetter
 from datetime import datetime
+import os
 import random
 import time
 import sys
@@ -37,6 +38,23 @@ LAST_HOD = 0
 N_SECS = 0
 
 
+def load_image(name, colorkey=None):
+    fullname = os.path.join('images', name)
+    # если файл не существует, то выходим
+    if not os.path.isfile(fullname):
+        print(f"Файл с изображением '{fullname}' не найден")
+        sys.exit()
+    image = pygame.image.load(fullname)
+    if colorkey is not None:
+        image = image.convert()
+        if colorkey == -1:
+            colorkey = image.get_at((0, 0))
+        image.set_colorkey(colorkey)
+    else:
+        image = image.convert_alpha()
+    return image
+
+
 class Board:
     def __init__(self):
         self.width = 10
@@ -45,7 +63,9 @@ class Board:
         self.left = 10
         self.top = 10
         self.cell_size = 20
-        self.set_view(left, top, cell_size)
+        self.n_foxes = 8
+        self.image = load_image("fox.png")
+        self._reset_add_foxes()
 
     def render(self, screen):
         for y in range(self.height):
@@ -54,13 +74,23 @@ class Board:
                     x * self.cell_size + self.left, y * self.cell_size + self.top, self.cell_size,
                     self.cell_size), 1)
 
-    def set_view(self, left, top, cell_size):
-        self.left = left
-        self.top = top
-        self.cell_size = cell_size
+    def on_click(self, cell, screen):
+        x = cell[0] * self.cell_size + self.left + 10
+        y = cell[1] * self.cell_size + self.top + 10
 
-    def on_click(self, cell):
-        print(cell)
+        if self.board[cell[0]][cell[1]] != 55:
+
+            if self.board[cell[0]][cell[1]] == 9:
+                screen.blit(self.image, (x, y))
+                self.board[cell[0]][cell[1]] = 55
+
+            elif self.board[cell[0]][cell[1]] > 0 and \
+                    self.board[cell[0]][cell[1]] != 9:
+                font = pygame.font.Font(None, 10)
+                digit = self.board[cell[0]][cell[1]]
+                text = font.render(str(digit), True, NUM_COLORS[digit])
+                screen.blit(text, (x, y))
+                self.board[cell[0]][cell[1]] = 55
 
     def get_cell(self, mouse_pos):
         cell_x = (mouse_pos[0] - self.left) // self.cell_size
@@ -69,9 +99,44 @@ class Board:
             return None
         return cell_x, cell_y
 
-    def get_click(self, mouse_pos):
+    def get_click(self, mouse_pos, screen):
         cell = self.get_cell(mouse_pos)
         if cell:
-            self.on_click(cell)
-        else:
-            print(cell)
+            self.on_click(cell, screen)
+
+    # Добавляем позиции лис. И определяем значения клеток без лис
+    def _reset_add_foxes(self):
+        positions = []
+        while len(positions) < self.n_foxes:
+            x, y = random.randint(0, self.height - 1), random.randint(0, self.height - 1)
+            if (x, y) not in positions:
+                positions.append((x, y))
+                # обрабатываем список списков с цифрами
+                for i in range(10):
+                    for j in range(10):
+                        if i == x and j == y:
+                            self.board[i][j] = 9
+                        elif i != x and j == y and self.board[i][j] != 9:
+                            self.board[i][j] += 1
+                        elif i == x and j != y and self.board[i][j] != 9:
+                            self.board[i][j] += 1
+                        elif abs(i - x) == abs(j - y) and self.board[i][j] != 9:
+                            self.board[i][j] += 1
+
+
+pygame.init()
+screen = pygame.display.set_mode((300, 300))
+pygame.display.set_caption("Координаты клетки")
+
+board = Board()
+board.render(screen)
+pygame.display.flip()
+running = True
+while running:
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            board.get_click(event.pos, screen)
+    pygame.display.flip()
+pygame.quit()

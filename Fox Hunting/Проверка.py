@@ -8,6 +8,7 @@ import sys
 import csv
 
 NUM_COLORS = {
+    0: pygame.Color(0, 0, 0),
     1: pygame.Color(244, 67, 54),
     2: pygame.Color(156, 39, 176),
     3: pygame.Color(63, 81, 181),
@@ -24,10 +25,10 @@ STATUS_FAILED = 2
 STATUS_SUCCESS = 3
 
 STATUS_ICONS = {
-    STATUS_READY: "./images/plus.png",
-    STATUS_PLAYING: "./images/smiley.png",
-    STATUS_FAILED: "./images/cross.png",
-    STATUS_SUCCESS: "./images/smiley-lol.png",
+    STATUS_READY: "plus.png",
+    STATUS_PLAYING: "smiley.png",
+    STATUS_FAILED: "cross.png",
+    STATUS_SUCCESS: "smiley-lol.png",
 }
 
 COUNTER_OF_FOXES = 0
@@ -65,31 +66,32 @@ class Board:
         self.cell_size = 20
         self.n_foxes = 8
         self.image = load_image("fox.png")
+        self.image1 = pygame.transform.scale(self.image, (18, 18))
         self._reset_add_foxes()
 
     def render(self, screen):
         for y in range(self.height):
             for x in range(self.width):
-                pygame.draw.rect(screen, pygame.Color(255, 255, 255), (
+                pygame.draw.rect(screen, pygame.Color(0, 0, 0), (
                     x * self.cell_size + self.left, y * self.cell_size + self.top, self.cell_size,
                     self.cell_size), 1)
 
     def on_click(self, cell, screen):
-        x = cell[0] * self.cell_size + self.left + 10
-        y = cell[1] * self.cell_size + self.top + 10
+        x = cell[0] * self.cell_size + self.left
+        y = cell[1] * self.cell_size + self.top
 
         if self.board[cell[0]][cell[1]] != 55:
 
             if self.board[cell[0]][cell[1]] == 9:
-                screen.blit(self.image, (x, y))
+                screen.blit(self.image1, (x + 1, y + 1))
                 self.board[cell[0]][cell[1]] = 55
 
-            elif self.board[cell[0]][cell[1]] > 0 and \
+            elif self.board[cell[0]][cell[1]] >= 0 and \
                     self.board[cell[0]][cell[1]] != 9:
-                font = pygame.font.Font(None, 10)
+                font = pygame.font.Font(None, 21)
                 digit = self.board[cell[0]][cell[1]]
                 text = font.render(str(digit), True, NUM_COLORS[digit])
-                screen.blit(text, (x, y))
+                screen.blit(text, (x + 5, y + 5))
                 self.board[cell[0]][cell[1]] = 55
 
     def get_cell(self, mouse_pos):
@@ -126,7 +128,8 @@ class Board:
 
 pygame.init()
 screen = pygame.display.set_mode((300, 300))
-pygame.display.set_caption("Координаты клетки")
+pygame.display.set_caption("Fox Hunting")
+screen.fill(pygame.Color('white'))
 
 board = Board()
 board.render(screen)

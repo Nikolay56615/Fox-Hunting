@@ -246,4 +246,48 @@ if __name__ == '__main__':
                         stage0 = True
 
             pygame.display.flip()
-pygame.quit()
+
+        stage2 = False
+        board = Board()
+        running = True
+        player_name = ''
+
+        clock = pygame.time.Clock()
+        if in_game:
+            # Стадия до начала игры: ввод имени игрока
+            while stage0:
+                fps = 180
+                if not running:
+                    pygame.quit()
+                    break
+                try:
+                    for event in pygame.event.get():
+                        if event.type == pygame.QUIT:
+                            running = False
+                        if event.type == pygame.KEYDOWN:
+                            if event.unicode in VALID_CHARACTERS:
+                                player_name += event.unicode
+                            elif event.key == 8:
+                                player_name = player_name[:-1]
+                            if event.key == 13:
+                                stage0 = False
+                                stage1 = True
+                                break
+                except Exception:
+                    exit(1)
+                screen.fill((0, 0, 0))
+                if len(player_name) > 7:
+                    player_name = player_name[:7]
+                font = pygame.font.Font(None, 36)
+                text = font.render("Введи своё имя: {}".format(player_name), True, (100, 255, 100))
+                text_x = width // 2 - text.get_width() // 2
+                text_y = height // 2 - text.get_height() // 2
+                text_w = text.get_width()
+                text_h = text.get_height()
+                screen.blit(text, (text_x, text_y))
+
+                pygame.display.flip()
+                clock.tick(fps)
+
+
+    pygame.quit()

@@ -61,12 +61,12 @@ class Board:
         self.width = 10
         self.height = 10
         self.board = [[0] * 10 for _ in range(10)]
-        self.left = 10
-        self.top = 10
-        self.cell_size = 20
+        self.left = 30
+        self.top = 60
+        self.cell_size = 26
         self.n_foxes = 8
         self.image = load_image("fox.png")
-        self.image1 = pygame.transform.scale(self.image, (18, 18))
+        self.image1 = pygame.transform.scale(self.image, (24, 24))
         self._reset_add_foxes()
 
     def render(self, screen):
@@ -88,10 +88,10 @@ class Board:
 
             elif self.board[cell[0]][cell[1]] >= 0 and \
                     self.board[cell[0]][cell[1]] != 9:
-                font = pygame.font.Font(None, 21)
+                font = pygame.font.Font(None, 28)
                 digit = self.board[cell[0]][cell[1]]
                 text = font.render(str(digit), True, NUM_COLORS[digit])
-                screen.blit(text, (x + 5, y + 5))
+                screen.blit(text, (x + 8, y + 5))
                 self.board[cell[0]][cell[1]] = 55
 
     def get_cell(self, mouse_pos):
@@ -127,7 +127,7 @@ class Board:
 
 
 pygame.init()
-screen = pygame.display.set_mode((300, 300))
+screen = pygame.display.set_mode((320, 330))
 pygame.display.set_caption("Fox Hunting")
 screen.fill(pygame.Color('white'))
 

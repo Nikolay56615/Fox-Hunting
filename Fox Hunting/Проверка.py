@@ -37,6 +37,11 @@ LAST_COUNTER_OF_HODS = COUNTER_OF_HODS
 LAST_COUNTER_OF_FOXES = 0
 LAST_HOD = 0
 N_SECS = 0
+VALID_CHARACTERS = 'qwertyuiopasdfghjklzxcvbnm'
+VALID_CHARACTERS += '[]-_()1234567890!@$&*+=/~.'
+VALID_CHARACTERS += 'QWERTYUIOPASDFGHJKLZXCVBNM'
+VALID_CHARACTERS += 'ёйцукенгшщзхъфывапролджэячсмитьбю'
+VALID_CHARACTERS += 'ЁЙЦУКЕНГШЩЗХЪФЫВАПРОЛДЖЭЯЧСМИТЬБЮ'
 
 
 def load_image(name, colorkey=None):
@@ -54,6 +59,22 @@ def load_image(name, colorkey=None):
     else:
         image = image.convert_alpha()
     return image
+
+
+def loadTable(table_name):
+    with open(table_name, encoding="utf8") as csvfile:
+        reader = csv.reader(csvfile,
+                            delimiter=';', quotechar='"')
+        title = next(reader)
+        list_of_lines = []
+        for i, row in enumerate(reader):
+            row[1] = int(row[1])
+            row[2] = int(row[2])
+            list_of_lines.append(row)
+        s = sorted(list_of_lines, key=itemgetter(2))  # сортируем по вторичному ключу
+        s = sorted(s, key=itemgetter(1))
+        s.insert(0, title)
+    return s
 
 
 class Board:
@@ -127,19 +148,102 @@ class Board:
 
 
 pygame.init()
-screen = pygame.display.set_mode((320, 330))
+size = width, height = 320, 330
+screen = pygame.display.set_mode(size)
 pygame.display.set_caption("Fox Hunting")
 screen.fill(pygame.Color('white'))
 
-board = Board()
-board.render(screen)
-pygame.display.flip()
-running = True
-while running:
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            running = False
-        if event.type == pygame.MOUSEBUTTONDOWN:
-            board.get_click(event.pos, screen)
-    pygame.display.flip()
+if __name__ == '__main__':
+    in_game = True
+    start_screen = True
+    score_screen = False
+    button_x = 0
+    button_y = 0
+    button_x1 = 0
+    button_y1 = 0
+    # Основной игровой цикл
+    while in_game:
+        # Начальный экран
+        while start_screen:
+            screen.fill((255, 255, 255))
+
+            font = pygame.font.Font(None, 50)
+            text = font.render("Начать игру", True, (255, 128, 0))
+            text_x = width // 2 - text.get_width() // 2
+            text_y = height // 2 - 2 * text.get_height()
+            text_w = text.get_width()
+            text_h = text.get_height()
+            screen.blit(text, (text_x, text_y))
+            pygame.draw.rect(screen, (0, 0, 0), (text_x - 10, text_y - 10,
+                                                 text_w + 20, text_h + 20), 1)
+
+            font = pygame.font.Font(None, 50)
+            text = font.render("Таблица лидеров", True, (255, 128, 0))
+            text_x1 = width // 2 - text.get_width() // 2
+            text_y1 = height // 2
+            text_w1 = text.get_width()
+            text_h1 = text.get_height()
+            screen.blit(text, (text_x1, text_y1))
+            pygame.draw.rect(screen, (0, 0, 0), (text_x1 - 10, text_y1 - 10,
+                                                 text_w1 + 20, text_h1 + 20), 1)
+
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    in_game = False
+                    start_screen = False
+                    running = False
+
+                if event.type == pygame.MOUSEBUTTONUP:
+                    x, y = event.pos
+                    if text_x1 <= x <= text_x1 + text_w1 and text_y1 <= y <= text_y1 + text_h1:
+                        start_screen = False
+                        score_screen = True
+                    if text_x <= x <= text_x + text_w and text_y <= y <= text_y + text_h:
+                        start_screen = False
+                        stage0 = True
+
+            pygame.display.flip()
+        try:
+            screen.fill((255, 255, 255))
+        except Exception:
+            exit(1)
+
+        # Экран Таблицы очков
+        while score_screen:
+
+            font = pygame.font.Font(None, 50)
+            text = font.render("Начать игру", True, (255, 128, 0))
+            text_x1 = width // 2 - text.get_width() // 2
+            text_y1 = height // 1.25
+            text_w1 = text.get_width()
+            text_h1 = text.get_height()
+            screen.blit(text, (text_x1, text_y1))
+            pygame.draw.rect(screen, (0, 255, 0), (text_x1 - 10, text_y1 - 10,
+                                                   text_w1 + 20, text_h1 + 20), 1)
+
+            table = loadTable('HighScoreTable.csv')
+
+            for i in range(min(6, len(table))):
+                string = str(table[i][0]) + ' - ' + str((table[i][1])) + ' - '
+                string += str(table[i][2]) + ' - ' + str((table[i][3]))
+                font = pygame.font.Font(None, 30)
+                text = font.render(string, True, (255, 128, 0))
+                text_x = width // 2 - text.get_width() // 2
+                text_y = height // 8 * (i + 1) - 40
+                screen.blit(text, (text_x, text_y))
+
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    in_game = False
+                    score_screen = False
+                    running = False
+
+                if event.type == pygame.MOUSEBUTTONUP:
+                    x, y = event.pos
+                    if text_x1 <= x <= text_x1 + text_w1 and text_y1 <= y <= text_y1 + text_h1:
+                        start_screen = False
+                        score_screen = False
+                        stage0 = True
+
+            pygame.display.flip()
 pygame.quit()

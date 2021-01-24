@@ -80,6 +80,7 @@ def table_check(table_name, text):
         list_of_lines.append(text)
         s = sorted(list_of_lines, key=itemgetter(2))  # сортируем по вторичному ключу
         s = sorted(s, key=itemgetter(1))
+    s = s[:6]
     s[-1][1] = str(s[-1][1])
     s[-1][2] = str(s[-1][2])
     text[1] = str(text[1])
@@ -433,7 +434,7 @@ if __name__ == '__main__':
                             if event.type == pygame.MOUSEBUTTONUP:
                                 x, y = event.pos
                                 if button_x <= x <= button_x1 and button_y <= y <= button_y1:
-                                    if check:
+                                    if check is False:
                                         save_in_table('HighScoreTable.csv', player_name)
                                     in_game = True
                                     start_screen = True

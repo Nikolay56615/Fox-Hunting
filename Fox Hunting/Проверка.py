@@ -1,11 +1,10 @@
 import pygame
 from operator import itemgetter
-from datetime import datetime
 import os
 import random
-import time
 import sys
 import csv
+from datetime import datetime
 
 NUM_COLORS = {
     0: pygame.Color(0, 0, 0),
@@ -19,23 +18,8 @@ NUM_COLORS = {
     8: pygame.Color(255, 152, 0)
 }
 
-STATUS_READY = 0
-STATUS_PLAYING = 1
-STATUS_FAILED = 2
-STATUS_SUCCESS = 3
-
-STATUS_ICONS = {
-    STATUS_READY: "plus.png",
-    STATUS_PLAYING: "smiley.png",
-    STATUS_FAILED: "cross.png",
-    STATUS_SUCCESS: "smiley-lol.png",
-}
-
 COUNTER_OF_FOXES = 0
 COUNTER_OF_HODS = 0
-LAST_COUNTER_OF_HODS = COUNTER_OF_HODS
-LAST_COUNTER_OF_FOXES = 0
-LAST_HOD = 0
 N_SECS = 0
 VALID_CHARACTERS = 'qwertyuiopasdfghjklzxcvbnm'
 VALID_CHARACTERS += '[]-_()1234567890!@$&*+=/~.'
@@ -44,6 +28,7 @@ VALID_CHARACTERS += 'ёйцукенгшщзхъфывапролджэячсми�
 VALID_CHARACTERS += 'ЁЙЦУКЕНГШЩЗХЪФЫВАПРОЛДЖЭЯЧСМИТЬБЮ'
 
 
+# Функция загрузки любой картинки из папки
 def load_image(name, colorkey=None):
     fullname = os.path.join('images', name)
     # если файл не существует, то выходим
@@ -61,6 +46,8 @@ def load_image(name, colorkey=None):
     return image
 
 
+# функция для загрузки таблицы рекордов,
+# возвращает список списков всех значений из файла
 def loadTable(table_name):
     with open(table_name, encoding="utf8") as csvfile:
         reader = csv.reader(csvfile,
@@ -74,9 +61,48 @@ def loadTable(table_name):
         s = sorted(list_of_lines, key=itemgetter(2))  # сортируем по вторичному ключу
         s = sorted(s, key=itemgetter(1))
         s.insert(0, title)
+
     return s
 
 
+# проверяет, поподает ли результат игрока
+# в топ 5
+def table_check(table_name, text):
+    with open(table_name, encoding="utf8") as csvfile:
+        reader = csv.reader(csvfile,
+                            delimiter=';', quotechar='"')
+        title = next(reader)
+        list_of_lines = []
+        for i, row in enumerate(reader):
+            row[1] = int(row[1])
+            row[2] = int(row[2])
+            list_of_lines.append(row)
+        list_of_lines.append(text)
+        s = sorted(list_of_lines, key=itemgetter(2))  # сортируем по вторичному ключу
+        s = sorted(s, key=itemgetter(1))
+    s[-1][1] = str(s[-1][1])
+    s[-1][2] = str(s[-1][2])
+    text[1] = str(text[1])
+    text[2] = str(text[2])
+    flag = ' '.join(s[-1]) == ' '.join(text)
+    return flag
+
+
+def save_in_table(table_name, name):
+    global LAST_HOD, N_SECS
+    with open(table_name, 'a', newline='', encoding="utf8") as csvfile:
+        writer = csv.writer(
+            csvfile, delimiter=';', quotechar='"')
+        current_datetime = datetime.now().date()
+        day = current_datetime.day
+        month = current_datetime.month
+        year = current_datetime.year
+        date = f'{day}.{month}.{year}'
+        writer.writerow([name, COUNTER_OF_HODS, N_SECS, date])
+
+
+# класс отвечающий за отрисовку полю
+# и основнй игровой процесс
 class Board:
     def __init__(self):
         self.width = 10
@@ -90,6 +116,7 @@ class Board:
         self.image1 = pygame.transform.scale(self.image, (24, 24))
         self._reset_add_foxes()
 
+    # рисует изначальное пустое поле на экране
     def render(self, screen):
         for y in range(self.height):
             for x in range(self.width):
@@ -97,15 +124,22 @@ class Board:
                     x * self.cell_size + self.left, y * self.cell_size + self.top, self.cell_size,
                     self.cell_size), 1)
 
+    # отрисовка всех значений при нажатии на
+    # пустую клетку
     def on_click(self, cell, screen):
+        global COUNTER_OF_FOXES, COUNTER_OF_HODS
         x = cell[0] * self.cell_size + self.left
         y = cell[1] * self.cell_size + self.top
 
         if self.board[cell[0]][cell[1]] != 55:
 
+            if COUNTER_OF_FOXES < 8:
+                COUNTER_OF_HODS += 1
+
             if self.board[cell[0]][cell[1]] == 9:
                 screen.blit(self.image1, (x + 1, y + 1))
                 self.board[cell[0]][cell[1]] = 55
+                COUNTER_OF_FOXES += 1
 
             elif self.board[cell[0]][cell[1]] >= 0 and \
                     self.board[cell[0]][cell[1]] != 9:
@@ -115,6 +149,8 @@ class Board:
                 screen.blit(text, (x + 8, y + 5))
                 self.board[cell[0]][cell[1]] = 55
 
+    # возвращает координату значения клетки в
+    # self.board
     def get_cell(self, mouse_pos):
         cell_x = (mouse_pos[0] - self.left) // self.cell_size
         cell_y = (mouse_pos[1] - self.top) // self.cell_size
@@ -145,6 +181,12 @@ class Board:
                             self.board[i][j] += 1
                         elif abs(i - x) == abs(j - y) and self.board[i][j] != 9:
                             self.board[i][j] += 1
+
+    # открытие всего поля
+    def reveal_map(self, screen):
+        for x in range(0, self.width):
+            for y in range(0, self.width):
+                self.on_click((x, y), screen)
 
 
 pygame.init()
@@ -208,7 +250,7 @@ if __name__ == '__main__':
         except Exception:
             exit(1)
 
-        # Экран Таблицы очков
+        # Экран таблицы рекордов
         while score_screen:
 
             font = pygame.font.Font(None, 50)
@@ -221,7 +263,7 @@ if __name__ == '__main__':
             pygame.draw.rect(screen, (0, 255, 0), (text_x1 - 10, text_y1 - 10,
                                                    text_w1 + 20, text_h1 + 20), 1)
 
-            table = loadTable('HighScoreTable.csv')
+            table = loadTable('HighScoreTable.csv')  # загрузка таблицы
 
             for i in range(min(6, len(table))):
                 string = str(table[i][0]) + ' - ' + str((table[i][1])) + ' - '
@@ -275,11 +317,11 @@ if __name__ == '__main__':
                                 break
                 except Exception:
                     exit(1)
-                screen.fill((0, 0, 0))
+                screen.fill((255, 255, 255))
                 if len(player_name) > 7:
                     player_name = player_name[:7]
                 font = pygame.font.Font(None, 36)
-                text = font.render("Введи своё имя: {}".format(player_name), True, (100, 255, 100))
+                text = font.render("Введи своё имя: {}".format(player_name), True, (255, 0, 0))
                 text_x = width // 2 - text.get_width() // 2
                 text_y = height // 2 - text.get_height() // 2
                 text_w = text.get_width()
@@ -289,5 +331,114 @@ if __name__ == '__main__':
                 pygame.display.flip()
                 clock.tick(fps)
 
+            if running:
+                fps = 60
 
+                t = 0  # счётчик тиков
+
+                if running:
+                    # Вторая стадия игры: Основной игровой процесс
+                    screen.fill((255, 255, 255))
+                    board.render(screen)
+                    pygame.display.flip()
+                    stage2 = True
+                    while stage2:
+                        if not running:
+                            pygame.quit()
+                            stage2 = False
+                        t += 1
+                        if t % fps == 0:
+                            N_SECS += 1
+                        for event in pygame.event.get():
+                            if event.type == pygame.QUIT:
+                                running = False
+                            if event.type == pygame.MOUSEBUTTONDOWN:
+                                board.get_click(event.pos, screen)
+                                if COUNTER_OF_FOXES == 8:
+                                    board.reveal_map(screen)
+                                    stage2 = False
+
+                        pygame.display.flip()
+                        clock.tick(fps)
+                    screen.fill((255, 255, 255))
+                    # Экран, отображаемый после окончания игры
+                    font = pygame.font.Font(None, 20)
+                    words = f'{player_name}, вы сняли всех лис за {COUNTER_OF_HODS} ходов.'
+                    text = font.render(words, True, (255, 0, 0))
+                    text_x = 5
+                    text_y = 15
+                    screen.blit(text, (text_x, text_y))
+
+                    words = f'На это вы потратили {N_SECS} секунд.'
+                    text = font.render(words, True, (255, 0, 0))
+                    text_x = 5
+                    text_y = 45
+                    screen.blit(text, (text_x, text_y))
+                    record = [player_name, COUNTER_OF_HODS, N_SECS]
+                    check = table_check('HighScoreTable.csv', record)
+                    if check is False:
+                        words = f'Поздравляю, ваш результат соответствует'
+                        text = font.render(words, True, (255, 0, 0))
+                        text_x = 5
+                        text_y = 75
+                        screen.blit(text, (text_x, text_y))
+
+                        words = f'критериям попадания в таблицу рекордов!'
+                        text = font.render(words, True, (255, 0, 0))
+                        text_x = 5
+                        text_y = 105
+                        screen.blit(text, (text_x, text_y))
+                    else:
+                        words = f'К сожалению, ваш результат не соответствует'
+                        text = font.render(words, True, (255, 0, 0))
+                        text_x = 5
+                        text_y = 75
+                        screen.blit(text, (text_x, text_y))
+
+                        words = f'критериям попадания в таблицу рекордов!'
+                        text = font.render(words, True, (255, 0, 0))
+                        text_x = 5
+                        text_y = 105
+                        screen.blit(text, (text_x, text_y))
+
+                        words = f'Чтобы попробывать снова нажмите "Далее"'
+                        text = font.render(words, True, (255, 0, 0))
+                        text_x = 5
+                        text_y = 135
+                        screen.blit(text, (text_x, text_y))
+
+                    font = pygame.font.Font(None, 50)
+                    text = font.render("Далее", True, (255, 128, 0))
+                    text_x = width // 2 - text.get_width() // 2
+                    text_y = height - text.get_height() * 2
+                    text_w = text.get_width()
+                    text_h = text.get_height()
+                    screen.blit(text, (text_x, text_y))
+                    pygame.draw.rect(screen, (0, 0, 0), (text_x - 10, text_y - 10,
+                                                         text_w + 20, text_h + 20), 1)
+                    button_x = text_x
+                    button_y = text_y
+                    button_x1 = text_x + text_w
+                    button_y1 = text_y + text_h
+                    in_game = False
+                    running = True
+                    pygame.display.flip()
+                    stage2 = False
+
+                    # Стадия игры, когда игрок может начать новую игру
+                    while running:
+                        for event in pygame.event.get():
+                            if event.type == pygame.QUIT:
+                                running = False
+                            if event.type == pygame.MOUSEBUTTONUP:
+                                x, y = event.pos
+                                if button_x <= x <= button_x1 and button_y <= y <= button_y1:
+                                    if check:
+                                        save_in_table('HighScoreTable.csv', player_name)
+                                    in_game = True
+                                    start_screen = True
+                                    score_screen = False
+                                    stage0 = False
+                                    stage2 = False
+                                    running = False
     pygame.quit()

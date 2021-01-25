@@ -77,15 +77,19 @@ def table_check(table_name, text):
             row[1] = int(row[1])
             row[2] = int(row[2])
             list_of_lines.append(row)
-        list_of_lines.append(text)
         s = sorted(list_of_lines, key=itemgetter(2))  # сортируем по вторичному ключу
         s = sorted(s, key=itemgetter(1))
-    s = s[:6]
+    s = s[:5]
+    s.append(text)
+    s = sorted(s, key=itemgetter(2))  # сортируем по вторичному ключу
+    s = sorted(s, key=itemgetter(1))
     s[-1][1] = str(s[-1][1])
     s[-1][2] = str(s[-1][2])
     text[1] = str(text[1])
     text[2] = str(text[2])
-    flag = ' '.join(s[-1]) == ' '.join(text)
+    a = ' '.join(s[-1])
+    b = ' '.join(text)
+    flag = a == b
     return flag
 
 

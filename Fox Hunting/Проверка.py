@@ -18,6 +18,18 @@ NUM_COLORS = {
     8: pygame.Color(255, 152, 0)
 }
 
+STATUS_READY = 0
+STATUS_PLAYING = 1
+STATUS_FAILED = 2
+STATUS_SUCCESS = 3
+
+STATUS_ICONS = {
+    STATUS_READY: "./images/plus.png",
+    STATUS_PLAYING: "./images/smiley.png",
+    STATUS_FAILED: "./images/cross.png",
+    STATUS_SUCCESS: "./images/smiley-lol.png",
+}
+
 COUNTER_OF_FOXES = 0
 COUNTER_OF_HODS = 0
 N_SECS = 0
@@ -145,6 +157,13 @@ class Board:
                 screen.blit(self.image1, (x + 1, y + 1))
                 self.board[cell[0]][cell[1]] = 55
                 COUNTER_OF_FOXES += 1
+                pygame.draw.rect(screen, pygame.Color('white'),
+                                 (145 - 5, 15, 70, 25))
+                font = pygame.font.Font(None, 30)
+                text = font.render(str(COUNTER_OF_FOXES), True, (0, 0, 0))
+                text_x = 145
+                text_y = 20
+                screen.blit(text, (text_x, text_y))
 
             elif self.board[cell[0]][cell[1]] >= 0 and \
                     self.board[cell[0]][cell[1]] != 9:
@@ -167,6 +186,8 @@ class Board:
         cell = self.get_cell(mouse_pos)
         if cell:
             self.on_click(cell, screen)
+            return True
+        return False
 
     # Добавляем позиции лис. И определяем значения клеток без лис
     def _reset_add_foxes(self):
@@ -345,6 +366,28 @@ if __name__ == '__main__':
                     # Вторая стадия игры: Основной игровой процесс
                     screen.fill((255, 255, 255))
                     board.render(screen)
+                    image1 = load_image("fox.png")
+                    image1 = pygame.transform.scale(image1, (20, 20))
+                    screen.blit(image1, (120, 20))
+                    font = pygame.font.Font(None, 30)
+                    text = font.render(str(0), True, (0, 0, 0))
+                    text_x = 145
+                    text_y = 20
+                    screen.blit(text, (text_x, text_y))
+                    image2 = load_image("hod.png")
+                    screen.blit(image2, (5, 20))
+                    font = pygame.font.Font(None, 30)
+                    text = font.render(str(0), True, (0, 0, 0))
+                    text_x = 25
+                    text_y = 20
+                    screen.blit(text, (text_x, text_y))
+                    image3 = load_image("clock-select.png")
+                    screen.blit(image3, (235, 20))
+                    font = pygame.font.Font(None, 30)
+                    text = font.render(str(0), True, (0, 0, 0))
+                    text_x = 260
+                    text_y = 20
+                    screen.blit(text, (text_x, text_y))
                     pygame.display.flip()
                     stage2 = True
                     while stage2:
@@ -354,11 +397,26 @@ if __name__ == '__main__':
                         t += 1
                         if t % fps == 0:
                             N_SECS += 1
+                            pygame.draw.rect(screen, pygame.Color('white'),
+                                             (260 - 10, 15, 200, 25))
+                            font = pygame.font.Font(None, 30)
+                            text = font.render(str(N_SECS), True, (0, 0, 0))
+                            text_x = 260
+                            text_y = 20
+                            screen.blit(text, (text_x, text_y))
                         for event in pygame.event.get():
                             if event.type == pygame.QUIT:
                                 running = False
                             if event.type == pygame.MOUSEBUTTONDOWN:
-                                board.get_click(event.pos, screen)
+                                fals = board.get_click(event.pos, screen)
+                                if fals:
+                                    pygame.draw.rect(screen, pygame.Color('white'),
+                                                     (25, 15, 90, 25))
+                                    font = pygame.font.Font(None, 30)
+                                    text = font.render(str(COUNTER_OF_HODS), True, (0, 0, 0))
+                                    text_x = 25
+                                    text_y = 20
+                                    screen.blit(text, (text_x, text_y))
                                 if COUNTER_OF_FOXES == 8:
                                     board.reveal_map(screen)
                                     stage2 = False
@@ -446,4 +504,8 @@ if __name__ == '__main__':
                                     stage0 = False
                                     stage2 = False
                                     running = False
+                                    COUNTER_OF_HODS = 0
+                                    COUNTER_OF_FOXES = 0
+                                    N_SECS = 0
+                                    t = 0
     pygame.quit()

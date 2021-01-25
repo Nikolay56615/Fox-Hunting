@@ -118,7 +118,7 @@ def save_in_table(table_name, name):
         writer.writerow([name, COUNTER_OF_HODS, N_SECS, date])
 
 
-# класс отвечающий за отрисовку полю
+# класс отвечающий за отрисовку поля
 # и основнй игровой процесс
 class Board:
     def __init__(self):

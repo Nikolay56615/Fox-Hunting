@@ -1,5 +1,5 @@
 from Проверка import load_image, NUM_COLORS
-from Fox_Hunting_2.0 import COUNTER_OF_FOXES, COUNTER_OF_HODS
+from Fox import COUNTER_OF_FOXES, COUNTER_OF_HODS
 import pygame
 import random
 

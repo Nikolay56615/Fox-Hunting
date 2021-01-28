@@ -30,7 +30,7 @@ STATUS_ICONS = {
     STATUS_SUCCESS: "./images/smiley-lol.png",
 }
 
-COUNTER_OF_FOXES = 0
+COUNTER_OF_FOXES = 8
 COUNTER_OF_HODS = 0
 N_SECS = 0
 VALID_CHARACTERS = 'qwertyuiopasdfghjklzxcvbnm'
@@ -150,18 +150,18 @@ class Board:
 
         if self.board[cell[0]][cell[1]] != 55:
 
-            if COUNTER_OF_FOXES < 8:
+            if COUNTER_OF_FOXES > 0:
                 COUNTER_OF_HODS += 1
 
             if self.board[cell[0]][cell[1]] == 9:
                 screen.blit(self.image1, (x + 1, y + 1))
                 self.board[cell[0]][cell[1]] = 55
-                COUNTER_OF_FOXES += 1
+                COUNTER_OF_FOXES -= 1
                 pygame.draw.rect(screen, pygame.Color('white'),
-                                 (145 - 5, 15, 70, 25))
+                                 (155, 15, 70, 25))
                 font = pygame.font.Font(None, 30)
                 text = font.render(str(COUNTER_OF_FOXES), True, (0, 0, 0))
-                text_x = 145
+                text_x = 160
                 text_y = 20
                 screen.blit(text, (text_x, text_y))
 
@@ -318,7 +318,7 @@ if __name__ == '__main__':
         stage2 = False
         board = Board()
         running = True
-        player_name = ''
+        player_name = '|'
 
         clock = pygame.time.Clock()
         if in_game:
@@ -334,10 +334,19 @@ if __name__ == '__main__':
                             running = False
                         if event.type == pygame.KEYDOWN:
                             if event.unicode in VALID_CHARACTERS:
-                                player_name += event.unicode
-                            elif event.key == 8:
                                 player_name = player_name[:-1]
+                                player_name += event.unicode
+                                player_name += '|'
+                            elif event.key == 8:
+                                if len(player_name) == 7 and player_name[-1] != '|':
+                                    player_name = player_name[:-1]
+                                else:
+                                    player_name = player_name[:-1]
+                                    player_name = player_name[:-1]
+                                player_name += '|'
                             if event.key == 13:
+                                if player_name[-1] == '|':
+                                    player_name = player_name[:-1]
                                 stage0 = False
                                 stage1 = True
                                 break
@@ -347,7 +356,15 @@ if __name__ == '__main__':
                 if len(player_name) > 7:
                     player_name = player_name[:7]
                 font = pygame.font.Font(None, 36)
-                text = font.render("Введи своё имя: {}".format(player_name), True, (255, 0, 0))
+                text = font.render("Введи своё имя:", True, (255, 0, 0))
+                text_x = width // 2 - text.get_width() // 2
+                text_y = height // 2 - text.get_height() // 2 - 30
+                text_w = text.get_width()
+                text_h = text.get_height()
+                screen.blit(text, (text_x, text_y))
+
+                font = pygame.font.Font(None, 36)
+                text = font.render(f"{player_name}", True, (255, 0, 0))
                 text_x = width // 2 - text.get_width() // 2
                 text_y = height // 2 - text.get_height() // 2
                 text_w = text.get_width()
@@ -368,21 +385,21 @@ if __name__ == '__main__':
                     board.render(screen)
                     image1 = load_image("fox.png")
                     image1 = pygame.transform.scale(image1, (20, 20))
-                    screen.blit(image1, (120, 20))
+                    screen.blit(image1, (135, 20))
                     font = pygame.font.Font(None, 30)
-                    text = font.render(str(0), True, (0, 0, 0))
-                    text_x = 145
+                    text = font.render(str(8), True, (0, 0, 0))
+                    text_x = 160
                     text_y = 20
                     screen.blit(text, (text_x, text_y))
                     image2 = load_image("hod.png")
-                    screen.blit(image2, (5, 20))
+                    screen.blit(image2, (30, 20))
                     font = pygame.font.Font(None, 30)
                     text = font.render(str(0), True, (0, 0, 0))
-                    text_x = 25
+                    text_x = 50
                     text_y = 20
                     screen.blit(text, (text_x, text_y))
                     image3 = load_image("clock-select.png")
-                    screen.blit(image3, (235, 20))
+                    screen.blit(image3, (240, 20))
                     font = pygame.font.Font(None, 30)
                     text = font.render(str(0), True, (0, 0, 0))
                     text_x = 260
@@ -398,7 +415,7 @@ if __name__ == '__main__':
                         if t % fps == 0:
                             N_SECS += 1
                             pygame.draw.rect(screen, pygame.Color('white'),
-                                             (260 - 10, 15, 200, 25))
+                                             (260, 15, 200, 25))
                             font = pygame.font.Font(None, 30)
                             text = font.render(str(N_SECS), True, (0, 0, 0))
                             text_x = 260
@@ -411,13 +428,13 @@ if __name__ == '__main__':
                                 fals = board.get_click(event.pos, screen)
                                 if fals:
                                     pygame.draw.rect(screen, pygame.Color('white'),
-                                                     (25, 15, 90, 25))
+                                                     (50, 15, 65, 25))
                                     font = pygame.font.Font(None, 30)
                                     text = font.render(str(COUNTER_OF_HODS), True, (0, 0, 0))
-                                    text_x = 25
+                                    text_x = 50
                                     text_y = 20
                                     screen.blit(text, (text_x, text_y))
-                                if COUNTER_OF_FOXES == 8:
+                                if COUNTER_OF_FOXES == 0:
                                     board.reveal_map(screen)
                                     stage2 = False
 
@@ -464,7 +481,7 @@ if __name__ == '__main__':
                         text_y = 105
                         screen.blit(text, (text_x, text_y))
 
-                        words = f'Чтобы попробывать снова нажмите "Далее"'
+                        words = f'Чтобы попробовать снова нажмите "Далее"'
                         text = font.render(words, True, (255, 0, 0))
                         text_x = 5
                         text_y = 135
@@ -505,7 +522,7 @@ if __name__ == '__main__':
                                     stage2 = False
                                     running = False
                                     COUNTER_OF_HODS = 0
-                                    COUNTER_OF_FOXES = 0
+                                    COUNTER_OF_FOXES = 8
                                     N_SECS = 0
                                     t = 0
     pygame.quit()

@@ -58,64 +58,70 @@ def load_image(name, colorkey=None):
     return image
 
 
-# функция для загрузки таблицы рекордов,
-# возвращает список списков всех значений из файла
-def loadTable(table_name):
-    with open(table_name, encoding="utf8") as csvfile:
-        reader = csv.reader(csvfile,
-                            delimiter=';', quotechar='"')
-        title = next(reader)
-        list_of_lines = []
-        for i, row in enumerate(reader):
-            row[1] = int(row[1])
-            row[2] = int(row[2])
-            list_of_lines.append(row)
-        s = sorted(list_of_lines, key=itemgetter(2))  # сортируем по вторичному ключу
+# класс, отвечающий за работу с таблицей лидеров
+class Table:
+    def __init__(self):
+        self.table_name = 'HighScoreTable.csv'
+
+    # функция для загрузки таблицы рекордов,
+    # возвращает список списков всех значений из файла
+    def loadTable(self, table_name):
+        with open(table_name, encoding="utf8") as csvfile:
+            reader = csv.reader(csvfile,
+                                delimiter=';', quotechar='"')
+            title = next(reader)
+            list_of_lines = []
+            for i, row in enumerate(reader):
+                row[1] = int(row[1])
+                row[2] = int(row[2])
+                list_of_lines.append(row)
+            s = sorted(list_of_lines, key=itemgetter(2))  # сортируем по вторичному ключу
+            s = sorted(s, key=itemgetter(1))
+            s.insert(0, title)
+
+        return s
+
+    # проверяет, поподает ли результат игрока
+    # в топ 5
+    def table_check(self, table_name, text):
+        with open(table_name, encoding="utf8") as csvfile:
+            reader = csv.reader(csvfile,
+                                delimiter=';', quotechar='"')
+            title = next(reader)
+            list_of_lines = []
+            for i, row in enumerate(reader):
+                row[1] = int(row[1])
+                row[2] = int(row[2])
+                list_of_lines.append(row)
+            s = sorted(list_of_lines, key=itemgetter(2))  # сортируем по вторичному ключу
+            s = sorted(s, key=itemgetter(1))
+        s = s[:5]
+        s.append(text)
+        s = sorted(s, key=itemgetter(2))  # сортируем по вторичному ключу
         s = sorted(s, key=itemgetter(1))
-        s.insert(0, title)
+        if len(s) < 6:
+            return False
+        s[-1][1] = str(s[-1][1])
+        s[-1][2] = str(s[-1][2])
+        text[1] = str(text[1])
+        text[2] = str(text[2])
+        a = ' '.join(s[-1])
+        b = ' '.join(text)
+        flag = a == b
+        return flag
 
-    return s
-
-
-# проверяет, поподает ли результат игрока
-# в топ 5
-def table_check(table_name, text):
-    with open(table_name, encoding="utf8") as csvfile:
-        reader = csv.reader(csvfile,
-                            delimiter=';', quotechar='"')
-        title = next(reader)
-        list_of_lines = []
-        for i, row in enumerate(reader):
-            row[1] = int(row[1])
-            row[2] = int(row[2])
-            list_of_lines.append(row)
-        s = sorted(list_of_lines, key=itemgetter(2))  # сортируем по вторичному ключу
-        s = sorted(s, key=itemgetter(1))
-    s = s[:5]
-    s.append(text)
-    s = sorted(s, key=itemgetter(2))  # сортируем по вторичному ключу
-    s = sorted(s, key=itemgetter(1))
-    s[-1][1] = str(s[-1][1])
-    s[-1][2] = str(s[-1][2])
-    text[1] = str(text[1])
-    text[2] = str(text[2])
-    a = ' '.join(s[-1])
-    b = ' '.join(text)
-    flag = a == b
-    return flag
-
-
-def save_in_table(table_name, name):
-    global LAST_HOD, N_SECS
-    with open(table_name, 'a', newline='', encoding="utf8") as csvfile:
-        writer = csv.writer(
-            csvfile, delimiter=';', quotechar='"')
-        current_datetime = datetime.now().date()
-        day = current_datetime.day
-        month = current_datetime.month
-        year = current_datetime.year
-        date = f'{day}.{month}.{year}'
-        writer.writerow([name, COUNTER_OF_HODS, N_SECS, date])
+    # сохраняет рекорд в таблицу
+    def save_in_table(self, table_name, name):
+        global LAST_HOD, N_SECS
+        with open(table_name, 'a', newline='', encoding="utf8") as csvfile:
+            writer = csv.writer(
+                csvfile, delimiter=';', quotechar='"')
+            current_datetime = datetime.now().date()
+            day = current_datetime.day
+            month = current_datetime.month
+            year = current_datetime.year
+            date = f'{day}.{month}.{year}'
+            writer.writerow([name, COUNTER_OF_HODS, N_SECS, date])
 
 
 # класс отвечающий за отрисовку поля
@@ -289,11 +295,12 @@ if __name__ == '__main__':
             pygame.draw.rect(screen, (0, 255, 0), (text_x1 - 10, text_y1 - 10,
                                                    text_w1 + 20, text_h1 + 20), 1)
 
-            table = loadTable('HighScoreTable.csv')  # загрузка таблицы
+            table = Table()
+            list_table = table.loadTable('HighScoreTable.csv')  # загрузка таблицы
 
-            for i in range(min(6, len(table))):
-                string = str(table[i][0]) + ' - ' + str((table[i][1])) + ' - '
-                string += str(table[i][2]) + ' - ' + str((table[i][3]))
+            for i in range(min(6, len(list_table))):
+                string = str(list_table[i][0]) + ' - ' + str((list_table[i][1])) + ' - '
+                string += str(list_table[i][2]) + ' - ' + str((list_table[i][3]))
                 font = pygame.font.Font(None, 30)
                 text = font.render(string, True, (255, 128, 0))
                 text_x = width // 2 - text.get_width() // 2
@@ -455,7 +462,8 @@ if __name__ == '__main__':
                     text_y = 45
                     screen.blit(text, (text_x, text_y))
                     record = [player_name, COUNTER_OF_HODS, N_SECS]
-                    check = table_check('HighScoreTable.csv', record)
+                    table = Table()
+                    check = table.table_check('HighScoreTable.csv', record)
                     if check is False:
                         words = f'Поздравляю, ваш результат соответствует'
                         text = font.render(words, True, (255, 0, 0))
@@ -514,7 +522,7 @@ if __name__ == '__main__':
                                 x, y = event.pos
                                 if button_x <= x <= button_x1 and button_y <= y <= button_y1:
                                     if check is False:
-                                        save_in_table('HighScoreTable.csv', player_name)
+                                        table.save_in_table('HighScoreTable.csv', player_name)
                                     in_game = True
                                     start_screen = True
                                     score_screen = False
